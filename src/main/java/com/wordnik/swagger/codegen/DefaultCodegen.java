@@ -176,6 +176,7 @@ public class DefaultCodegen {
         "boolean",
         "Boolean",
         "Double",
+        "Void",
         "Integer",
         "Long",
         "Float")
@@ -586,14 +587,16 @@ public class DefaultCodegen {
     }
 
     if(operation.getResponses() != null) {
-      for(String responseCode: operation.getResponses().keySet()) {
+      for(String responseCode: new TreeSet<String>(operation.getResponses().keySet())) {
         Response response = operation.getResponses().get(responseCode);
-        if("200".equals(responseCode)) {
+        if (responseCode.startsWith("2")) {
+          // use the first, i.e. the smallest 2xx response status as methodResponse
           methodResponse = response;
           op.successResponse = fromResponse(responseCode, response);
           if(operation.getResponses().keySet().size() > 1) {
             op.successResponse.hasMore = new Boolean(true);
           }
+          break;
         }
       }
       if(methodResponse == null && operation.getResponses().keySet().contains("default")) {
