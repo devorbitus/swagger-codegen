@@ -7,17 +7,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class WordObject  { 
+public class WordObject  {
+  
   private Long id = null;
-  
-  //public enum idEnum {  }; 
-  
   private String word = null;
   private String originalWord = null;
   private List<String> suggestions = new ArrayList<String>() ;
   private String canonicalForm = null;
   private String vulgar = null;
-  
+
   
   /**
    **/

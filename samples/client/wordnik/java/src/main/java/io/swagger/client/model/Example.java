@@ -1,7 +1,7 @@
 package io.swagger.client.model;
 
-import io.swagger.client.model.Sentence;
 import io.swagger.client.model.ContentProvider;
+import io.swagger.client.model.Sentence;
 import io.swagger.client.model.ScoredWord;
 
 import com.wordnik.swagger.annotations.*;
@@ -9,15 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Example  { 
+public class Example  {
+  
   private Long id = null;
-  
-  //public enum idEnum {  }; 
-  
   private Long exampleId = null;
-  
-  //public enum exampleIdEnum {  }; 
-  
   private String title = null;
   private String text = null;
   private ScoredWord score = null;
@@ -25,19 +20,10 @@ public class Example  {
   private String word = null;
   private ContentProvider provider = null;
   private Integer year = null;
-  
-  //public enum yearEnum {  }; 
-  
   private Float rating = null;
-  
-  //public enum ratingEnum {  }; 
-  
   private Long documentId = null;
-  
-  //public enum documentIdEnum {  }; 
-  
   private String url = null;
-  
+
   
   /**
    **/

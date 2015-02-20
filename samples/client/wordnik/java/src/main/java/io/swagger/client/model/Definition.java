@@ -1,28 +1,26 @@
 package io.swagger.client.model;
 
-import io.swagger.client.model.ExampleUsage;
-import io.swagger.client.model.Label;
-import io.swagger.client.model.Note;
-import java.util.*;
 import io.swagger.client.model.Related;
-import io.swagger.client.model.Citation;
+import io.swagger.client.model.Note;
+import io.swagger.client.model.Label;
 import io.swagger.client.model.TextPron;
+import io.swagger.client.model.ExampleUsage;
+import java.util.*;
+import io.swagger.client.model.Citation;
 
 import com.wordnik.swagger.annotations.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Definition  { 
+public class Definition  {
+  
   private String extendedText = null;
   private String text = null;
   private String sourceDictionary = null;
   private List<Citation> citations = new ArrayList<Citation>() ;
   private List<Label> labels = new ArrayList<Label>() ;
   private Float score = null;
-  
-  //public enum scoreEnum {  }; 
-  
   private List<ExampleUsage> exampleUses = new ArrayList<ExampleUsage>() ;
   private String attributionUrl = null;
   private String seqString = null;
@@ -33,7 +31,7 @@ public class Definition  {
   private List<Note> notes = new ArrayList<Note>() ;
   private List<TextPron> textProns = new ArrayList<TextPron>() ;
   private String partOfSpeech = null;
-  
+
   
   /**
    **/

@@ -7,15 +7,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Note  { 
+public class Note  {
+  
   private String noteType = null;
   private List<String> appliesTo = new ArrayList<String>() ;
   private String value = null;
   private Integer pos = null;
-  
-  //public enum posEnum {  }; 
-  
-  
+
   
   /**
    **/

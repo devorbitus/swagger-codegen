@@ -7,11 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class WordList  { 
+public class WordList  {
+  
   private Long id = null;
-  
-  //public enum idEnum {  }; 
-  
   private String permalink = null;
   private String name = null;
   private Date createdAt = null;
@@ -19,16 +17,10 @@ public class WordList  {
   private Date lastActivityAt = null;
   private String username = null;
   private Long userId = null;
-  
-  //public enum userIdEnum {  }; 
-  
   private String description = null;
   private Long numberWordsInList = null;
-  
-  //public enum numberWordsInListEnum {  }; 
-  
   private String type = null;
-  
+
   
   /**
    **/

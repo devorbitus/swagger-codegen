@@ -8,14 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Root  { 
+public class Root  {
+  
   private Long id = null;
-  
-  //public enum idEnum {  }; 
-  
   private String name = null;
   private List<Category> categories = new ArrayList<Category>() ;
-  
+
   
   /**
    **/

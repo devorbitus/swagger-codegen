@@ -6,10 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Citation  { 
+public class Citation  {
+  
   private String cite = null;
   private String source = null;
-  
+
   
   /**
    **/

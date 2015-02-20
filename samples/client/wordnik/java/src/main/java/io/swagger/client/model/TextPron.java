@@ -6,14 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class TextPron  { 
+public class TextPron  {
+  
   private String raw = null;
   private Integer seq = null;
-  
-  //public enum seqEnum {  }; 
-  
   private String rawType = null;
-  
+
   
   /**
    **/

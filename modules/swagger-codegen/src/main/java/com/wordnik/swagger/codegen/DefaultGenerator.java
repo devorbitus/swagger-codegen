@@ -28,13 +28,14 @@ public class DefaultGenerator implements Generator {
     return this;
   }
 
-  public void generate() {
+  public List<File> generate() {
     if(swagger == null || config == null) {
       throw new RuntimeException("missing swagger input or config!");
     }
     if(System.getProperty("debugSwagger") != null) {
       Json.prettyPrint(swagger);
     }
+    List<File> files = new ArrayList<File>();
     try {
       config.processOpts();
       if(swagger.getInfo() != null) {
@@ -99,6 +100,7 @@ public class DefaultGenerator implements Generator {
               .defaultValue("")
               .compile(template);
             writeToFile(filename, tmpl.execute(models));
+            files.add(new File(filename));
           }
         }
       }
@@ -136,6 +138,7 @@ public class DefaultGenerator implements Generator {
             .compile(template);
 
           writeToFile(filename, tmpl.execute(operation));
+          files.add(new File(filename));
         }
       }
       if(System.getProperty("debugOperations") != null) {
@@ -166,6 +169,8 @@ public class DefaultGenerator implements Generator {
         m.hasMoreModels = true;
       }
 
+      config.postProcessSupportingFileData(bundle);
+
       if(System.getProperty("debugSupportingFiles") != null) {
         System.out.println("############ Supporting file info ############");
         Json.prettyPrint(bundle);
@@ -192,11 +197,13 @@ public class DefaultGenerator implements Generator {
             .compile(template);
 
           writeToFile(outputFilename, tmpl.execute(bundle));
+          files.add(new File(outputFilename));
         }
         else {
           String template = readTemplate(config.templateDir() + File.separator + support.templateFile);
           FileUtils.writeStringToFile(new File(outputFilename), template);
           System.out.println("copying file to " + outputFilename);
+          files.add(new File(outputFilename));
         }
       }
 
@@ -205,6 +212,7 @@ public class DefaultGenerator implements Generator {
     catch (Exception e) {
       e.printStackTrace();
     }
+    return files;
   }
 
   public Map<String, List<CodegenOperation>> processPaths(Map<String, Path> paths) {
@@ -406,14 +414,14 @@ public Map<String, Object> processOperations(CodegenConfig config, String tag, L
     operations.put("operations", objs);
     operations.put("package", config.apiPackage());
 
-    Set<String> allImports = new HashSet<String>();
+    Set<String> allImports = new LinkedHashSet<String>();
     for(CodegenOperation op: ops) {
       allImports.addAll(op.imports);
     }
 
     List<Map<String, String>> imports = new ArrayList<Map<String, String>>();
     for(String i: allImports) {
-      Map<String, String> im = new HashMap<String, String>();
+      Map<String, String> im = new LinkedHashMap<String, String>();
       String m = config.importMapping().get(i);
       if(m == null)
         m = config.toModelImport(i);
@@ -433,7 +441,7 @@ public Map<String, Object> processOperations(CodegenConfig config, String tag, L
     objs.put("package", config.modelPackage());
     List<Object> models = new ArrayList<Object>();
     List<Object> model = new ArrayList<Object>();
-    Set<String> allImports = new HashSet<String>();
+    Set<String> allImports = new LinkedHashSet<String>();
     for(String key: definitions.keySet()) {
       Model mm = definitions.get(key);
       CodegenModel cm = config.fromModel(key, mm);
@@ -446,7 +454,7 @@ public Map<String, Object> processOperations(CodegenConfig config, String tag, L
 
     List<Map<String, String>> imports = new ArrayList<Map<String, String>>();
     for(String i: allImports) {
-      Map<String, String> im = new HashMap<String, String>();
+      Map<String, String> im = new LinkedHashMap<String, String>();
       String m = config.importMapping().get(i);
       if(m == null)
         m = config.toModelImport(i);

@@ -6,16 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @ApiModel(description = "")
-public class Frequency  { 
+public class Frequency  {
+  
   private Long count = null;
-  
-  //public enum countEnum {  }; 
-  
   private Integer year = null;
-  
-  //public enum yearEnum {  }; 
-  
-  
+
   
   /**
    **/

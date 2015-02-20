@@ -13,6 +13,10 @@ public class AndroidClientCodegen extends DefaultCodegen implements CodegenConfi
   protected String artifactVersion = "1.0.0";
   protected String sourceFolder = "src/main/java";
 
+  public CodegenType getTag() {
+    return CodegenType.CLIENT;
+  }
+
   public String getName() {
     return "android";
   }
@@ -67,11 +71,11 @@ public class AndroidClientCodegen extends DefaultCodegen implements CodegenConfi
 
   @Override
   public String apiFileFolder() {
-    return outputFolder + "/" + sourceFolder + "/" + apiPackage().replaceAll("\\.", "/");
+    return outputFolder + "/" + sourceFolder + "/" + apiPackage().replace('.', File.separatorChar);
   }
 
   public String modelFileFolder() {
-    return outputFolder + "/" + sourceFolder + "/" + modelPackage().replaceAll("\\.", "/");
+    return outputFolder + "/" + sourceFolder + "/" + modelPackage().replace('.', File.separatorChar);
   }
 
   @Override
