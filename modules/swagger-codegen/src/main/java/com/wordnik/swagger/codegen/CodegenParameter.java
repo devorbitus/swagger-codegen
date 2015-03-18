@@ -3,7 +3,9 @@ package com.wordnik.swagger.codegen;
 public class CodegenParameter {
   public Boolean isFormParam, isQueryParam, isPathParam, isHeaderParam,
     isCookieParam, isBodyParam, isFile, notFile, hasMore, isContainer, secondaryParam;
-  public String baseName, paramName, paramVarName, dataType, collectionFormat, description, baseType;
+  public String baseName, paramName, dataType, collectionFormat, description, baseType;
+  public String jsonSchema;
+
   /**
    * Determines whether this parameter is mandatory. If the parameter is in "path",
    * this property is required and its value MUST be true. Otherwise, the property
@@ -20,7 +22,6 @@ public class CodegenParameter {
     output.secondaryParam = this.secondaryParam;
     output.baseName = this.baseName;
     output.paramName = this.paramName;
-    output.paramVarName = this.paramVarName;
     output.dataType = this.dataType;
     output.collectionFormat = this.collectionFormat;
     output.description = this.description;
@@ -32,6 +33,7 @@ public class CodegenParameter {
     output.isCookieParam = this.isCookieParam;
     output.isBodyParam = this.isBodyParam;
     output.required = this.required;
+    output.jsonSchema = this.jsonSchema;
 
     return output;
   }
