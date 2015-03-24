@@ -5,7 +5,7 @@
     <version>5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.wordnik</groupId>
+  <groupId>com.intuit.uploaded</groupId>
   <artifactId>swagger-codegen-project</artifactId>
   <packaging>pom</packaging>
   <name>swagger-codegen-project</name>
@@ -346,6 +346,13 @@
       </snapshots>
     </repository>
   </repositories>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ems-thirdparty-releases</id>
+            <name>ems-dev-snapshots</name>
+            <url>http://nexus.payments.intuit.com/nexus/content/repositories/ems-dev-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
   <properties>
     <swagger-parser-version>1.0.3</swagger-parser-version>
     <scala-version>2.11.1</scala-version>
