@@ -1,0 +1,158 @@
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(revision 33c4c26051d00755036c7f85ac6e0a208da234c8)
++++ pom.xml	(revision )
+@@ -5,7 +5,7 @@
+     <version>5</version>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+-  <groupId>com.wordnik</groupId>
++  <groupId>com.intuit.uploaded</groupId>
+   <artifactId>swagger-codegen-project</artifactId>
+   <packaging>pom</packaging>
+   <name>swagger-codegen-project</name>
+@@ -346,6 +346,13 @@
+       </snapshots>
+     </repository>
+   </repositories>
++    <distributionManagement>
++        <snapshotRepository>
++            <id>ems-thirdparty-releases</id>
++            <name>ems-dev-snapshots</name>
++            <url>http://nexus.payments.intuit.com/nexus/content/repositories/ems-dev-snapshots/</url>
++        </snapshotRepository>
++    </distributionManagement>
+   <properties>
+     <swagger-parser-version>1.0.0</swagger-parser-version>
+     <scala-version>2.11.1</scala-version>
+@@ -362,4 +369,4 @@
+     <scala-version>2.10.4</scala-version>
+     <jmustache-version>1.9</jmustache-version>
+   </properties>
+-</project>
++</project>
+\ No newline at end of file
+Index: modules/swagger-codegen-distribution/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- modules/swagger-codegen-distribution/pom.xml	(revision 33c4c26051d00755036c7f85ac6e0a208da234c8)
++++ modules/swagger-codegen-distribution/pom.xml	(revision )
+@@ -1,12 +1,12 @@
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <parent>
+-    <groupId>com.wordnik</groupId>
++    <groupId>com.intuit.uploaded</groupId>
+     <artifactId>swagger-codegen-project</artifactId>
+     <version>2.1.2-M1-SNAPSHOT</version>
+     <relativePath>../..</relativePath>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+-  <groupId>com.wordnik</groupId>
++  <groupId>com.intuit.uploaded</groupId>
+   <artifactId>swagger-codegen-distribution</artifactId>
+   <packaging>jar</packaging>
+   <name>swagger-codegen (executable)</name>
+@@ -72,9 +72,16 @@
+   </build>
+   <dependencies>
+     <dependency>
+-      <groupId>com.wordnik</groupId>
++      <groupId>com.intuit.uploaded</groupId>
+       <artifactId>swagger-codegen</artifactId>
+       <version>${project.parent.version}</version>
+     </dependency>
+   </dependencies>
++    <distributionManagement>
++        <snapshotRepository>
++            <id>ems-thirdparty-releases</id>
++            <name>ems-dev-snapshots</name>
++            <url>http://nexus.payments.intuit.com/nexus/content/repositories/ems-dev-snapshots/</url>
++        </snapshotRepository>
++    </distributionManagement>
+ </project>
+\ No newline at end of file
+Index: modules/swagger-generator/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- modules/swagger-generator/pom.xml	(revision 33c4c26051d00755036c7f85ac6e0a208da234c8)
++++ modules/swagger-generator/pom.xml	(revision )
+@@ -1,7 +1,7 @@
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+-    <groupId>com.wordnik</groupId>
++    <groupId>com.intuit.uploaded</groupId>
+     <artifactId>swagger-codegen-project</artifactId>
+     <version>2.1.2-M1-SNAPSHOT</version>
+     <relativePath>../..</relativePath>
+@@ -129,7 +129,7 @@
+       <version>${swagger-core-version}</version>
+     </dependency>
+     <dependency>
+-      <groupId>com.wordnik</groupId>
++      <groupId>com.intuit.uploaded</groupId>
+       <artifactId>swagger-codegen</artifactId>
+       <version>${project.parent.version}</version>
+     </dependency>
+@@ -237,4 +237,11 @@
+     <scala-maven-plugin-version>3.1.5</scala-maven-plugin-version>
+     <scala-version>2.10.0</scala-version>
+   </properties>
++    <distributionManagement>
++        <snapshotRepository>
++            <id>ems-thirdparty-releases</id>
++            <name>ems-dev-snapshots</name>
++            <url>http://nexus.payments.intuit.com/nexus/content/repositories/ems-dev-snapshots/</url>
++        </snapshotRepository>
++    </distributionManagement>
+ </project>
+Index: modules/swagger-codegen/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- modules/swagger-codegen/pom.xml	(revision 33c4c26051d00755036c7f85ac6e0a208da234c8)
++++ modules/swagger-codegen/pom.xml	(revision )
+@@ -1,12 +1,12 @@
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <parent>
+-    <groupId>com.wordnik</groupId>
++    <groupId>com.intuit.uploaded</groupId>
+     <artifactId>swagger-codegen-project</artifactId>
+     <version>2.1.2-M1-SNAPSHOT</version>
+     <relativePath>../..</relativePath>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+-  <groupId>com.wordnik</groupId>
++  <groupId>com.intuit.uploaded</groupId>
+   <artifactId>swagger-codegen</artifactId>
+   <packaging>jar</packaging>
+   <name>swagger-codegen (core library)</name>
+@@ -278,7 +278,7 @@
+       <version>${swagger-parser-version}</version>
+     </dependency>
+     <dependency>
+-      <groupId>${project.groupId}</groupId>
++      <groupId>com.wordnik</groupId>
+       <artifactId>swagger-core</artifactId>
+       <version>${swagger-core-version}</version>
+     </dependency>
+@@ -338,4 +338,11 @@
+       </snapshots>
+     </repository>
+   </repositories>
++    <distributionManagement>
++        <snapshotRepository>
++            <id>ems-thirdparty-releases</id>
++            <name>ems-dev-snapshots</name>
++            <url>http://nexus.payments.intuit.com/nexus/content/repositories/ems-dev-snapshots/</url>
++        </snapshotRepository>
++    </distributionManagement>
+ </project>

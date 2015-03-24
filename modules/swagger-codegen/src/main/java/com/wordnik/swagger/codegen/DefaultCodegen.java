@@ -1,5 +1,6 @@
 package com.wordnik.swagger.codegen;
 
+import com.wordnik.swagger.codegen.examples.ExampleGenerator;
 import com.wordnik.swagger.models.*;
 import com.wordnik.swagger.models.auth.ApiKeyAuthDefinition;
 import com.wordnik.swagger.models.auth.BasicAuthDefinition;
@@ -8,12 +9,17 @@ import com.wordnik.swagger.models.auth.SecuritySchemeDefinition;
 import com.wordnik.swagger.models.parameters.*;
 import com.wordnik.swagger.models.properties.*;
 import com.wordnik.swagger.util.Json;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DefaultCodegen {
   Logger LOGGER = LoggerFactory.getLogger(DefaultCodegen.class);
@@ -134,7 +140,7 @@ public class DefaultCodegen {
   }
 
   public String toApiFilename(String name) {
-    return initialCaps(name) + "Api";
+    return toApiName(name);
   }
 
   public String toApiVarName(String name) {
@@ -142,7 +148,7 @@ public class DefaultCodegen {
   }
 
   public String toModelFilename(String name) {
-    return name;
+    return initialCaps(name);
   }
 
   public String toOperationId(String operationId) { return operationId; }
@@ -249,6 +255,55 @@ public class DefaultCodegen {
     importMapping.put("LocalTime", "org.joda.time.*");
   }
 
+
+  public String generateExamplePath(String path, Operation operation) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(path);
+
+    if(operation.getParameters() != null) {
+      int count = 0;
+
+      for(Parameter param : operation.getParameters()) {
+        if(param instanceof QueryParameter) {
+          StringBuilder paramPart = new StringBuilder();
+          QueryParameter qp = (QueryParameter) param;
+
+          if(count == 0)
+            paramPart.append("?");
+          else
+            paramPart.append(",");
+          count += 1;
+          if(!param.getRequired())
+            paramPart.append("[");
+          paramPart.append(param.getName()).append("=");
+          paramPart.append("{");
+          if(qp.getCollectionFormat() != null) {
+            paramPart.append(param.getName() + "1");
+            if("csv".equals(qp.getCollectionFormat()))
+              paramPart.append(",");
+            else if("pipes".equals(qp.getCollectionFormat()))
+              paramPart.append("|");
+            else if("tsv".equals(qp.getCollectionFormat()))
+              paramPart.append("\t");
+            else if("multi".equals(qp.getCollectionFormat())) {
+              paramPart.append("&").append(param.getName()).append("=");
+              paramPart.append(param.getName() + "2");
+            }
+          }
+          else {
+            paramPart.append(param.getName());
+          }
+          paramPart.append("}");
+          if(!param.getRequired())
+            paramPart.append("]");
+          sb.append(paramPart.toString());
+        }
+      }
+    }
+
+    return sb.toString();
+  }
+
   public String toInstantiationType(Property p) {
     if (p instanceof MapProperty) {
       MapProperty ap = (MapProperty) p;
@@ -333,11 +388,11 @@ public class DefaultCodegen {
   }
 
   public String snakeCase(String name) {
-    return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+      return (name.length() > 0) ? (Character.toLowerCase(name.charAt(0)) + name.substring(1)) : "";
   }
 
   public String initialCaps(String name) {
-    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    return StringUtils.capitalize(name);
   }
 
   public String getTypeDeclaration(String name) {
@@ -471,14 +526,9 @@ public class DefaultCodegen {
     if (name == null || name.length() == 0) {
       return name;
     }
-    name = toVarName(name);
-    if (name.length() > 1 && Character.isUpperCase(name.charAt(1)) &&
-            Character.isLowerCase(name.charAt(0))){
-      return name;
-    }
-    char chars[] = name.toCharArray();
-    chars[0] = Character.toUpperCase(chars[0]);
-    return new String(chars);
+
+    return camelize(toVarName(name));
+
   }
 
   public CodegenProperty fromProperty(String name, Property p) {
@@ -570,14 +620,18 @@ public class DefaultCodegen {
         property.isPrimitiveType = true;
     }
     else {
-      property.isNotContainer = true;
+        setNonArrayMapProperty(property, type);
+    }
+    return property;
+  }
+
+  protected void setNonArrayMapProperty(CodegenProperty property, String type) {
+    property.isNotContainer = true;
       if(languageSpecificPrimitives().contains(type))
         property.isPrimitiveType = true;
       else
         property.complexType = property.baseType;
     }
-    return property;
-  }
 
   private Response findMethodResponse(Map<String, Response> responses) {
 
@@ -594,7 +648,7 @@ public class DefaultCodegen {
     return responses.get(code);
   }
 
-  public CodegenOperation fromOperation(String path, String httpMethod, Operation operation){
+  public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, Map<String, Model> definitions) {
     CodegenOperation op = CodegenModelFactory.newInstance(CodegenModelType.OPERATION);
     Set<String> imports = new HashSet<String>();
 
@@ -637,6 +691,8 @@ public class DefaultCodegen {
         count += 1;
         if (count < operation.getConsumes().size())
           mediaType.put("hasMore", "true");
+        else
+          mediaType.put("hasMore", null);
         c.add(mediaType);
       }
       op.consumes = c;
@@ -652,6 +708,8 @@ public class DefaultCodegen {
         count += 1;
         if (count < operation.getProduces().size())
           mediaType.put("hasMore", "true");
+        else
+          mediaType.put("hasMore", null);
         c.add(mediaType);
       }
       op.produces = c;
@@ -677,24 +735,40 @@ public class DefaultCodegen {
       }
       op.responses.get(op.responses.size() - 1).hasMore = false;
 
-      if (methodResponse != null) {
-        op.returnType = methodCodegenResponse.dataType;
-        op.returnBaseType = methodCodegenResponse.baseType;
-        op.returnSimpleType = methodCodegenResponse.simpleType;
-        op.returnTypeIsPrimitive = methodCodegenResponse.primitiveType;
-        op.returnContainer = methodCodegenResponse.containerType;
-        op.isListContainer = methodCodegenResponse.isListContainer;
-        op.isMapContainer = methodCodegenResponse.isMapContainer;
-        if (methodResponse.getSchema() != null) {
-          Property responseProperty = methodResponse.getSchema();
-          responseProperty.setRequired(true);
-          CodegenProperty cm = fromProperty("response", responseProperty);
-          op.examples = toExamples(methodResponse.getExamples());
-          op.defaultResponse = toDefaultValue(responseProperty);
-          addHeaders(methodResponse, op.responseHeaders);
-        }
+    if(methodResponse != null) {
+      if (methodResponse.getSchema() != null) {
+        CodegenProperty cm = fromProperty("response", methodResponse.getSchema());
 
+        Property responseProperty = methodResponse.getSchema();
+
+        if(responseProperty instanceof ArrayProperty) {
+          ArrayProperty ap = (ArrayProperty) responseProperty;
+          CodegenProperty innerProperty = fromProperty("response", ap.getItems());
+          op.returnBaseType = innerProperty.baseType;
+        }
+        else {
+          if(cm.complexType != null)
+            op.returnBaseType = cm.complexType;
+          else
+            op.returnBaseType = cm.baseType;
+        }
+        op.examples = new ExampleGenerator(definitions).generate(methodResponse.getExamples(), operation.getProduces(), responseProperty);
+        op.defaultResponse = toDefaultValue(responseProperty);
+        op.returnType = cm.datatype;
+        if(cm.isContainer != null) {
+          op.returnContainer = cm.containerType;
+          if("map".equals(cm.containerType))
+            op.isMapContainer = Boolean.TRUE;
+          else if ("list".equalsIgnoreCase(cm.containerType))
+            op.isListContainer = Boolean.TRUE;
+        }
+        else
+          op.returnSimpleType = true;
+        if (languageSpecificPrimitives().contains(op.returnBaseType) || op.returnBaseType == null)
+          op.returnTypeIsPrimitive = true;
       }
+      addHeaders(methodResponse, op.responseHeaders);
+    }
     }
 
     List<Parameter> parameters = operation.getParameters();
@@ -777,6 +851,7 @@ public class DefaultCodegen {
     r.schema = response.getSchema();
     r.examples = toExamples(response.getExamples());
     r.jsonSchema = Json.pretty(response);
+    addHeaders(response, r.headers);
 
     if (r.schema != null) {
       Property responseProperty = response.getSchema();
@@ -998,4 +1073,76 @@ public class DefaultCodegen {
     opList.add(co);
     co.baseName = tag;
   }
+
+  /* underscore and camelize are copied from Twitter elephant bird
+   * https://github.com/twitter/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/util/Strings.java
+   */
+
+  /**
+   * Underscore the given word.
+   * @param word The word
+   * @return The underscored version of the word
+   */
+  public static String underscore(String word) {
+    String firstPattern = "([A-Z]+)([A-Z][a-z])";
+    String secondPattern = "([a-z\\d])([A-Z])";
+    String replacementPattern = "$1_$2";
+    // Replace package separator with slash.
+    word = word.replaceAll("\\.", "/");
+    // Replace $ with two underscores for inner classes.
+    word = word.replaceAll("\\$", "__");
+    // Replace capital letter with _ plus lowercase letter.
+    word = word.replaceAll(firstPattern, replacementPattern);
+    word = word.replaceAll(secondPattern, replacementPattern);
+    word = word.replace('-', '_');
+    word = word.toLowerCase();
+    return word;
+  }
+
+  public static String camelize(String word) {
+    return camelize(word, false);
+  }
+
+  public static String camelize(String word, boolean lowercaseFirstLetter) {
+    // Replace all slashes with dots (package separator)
+    Pattern p = Pattern.compile("\\/(.?)");
+    Matcher m = p.matcher(word);
+    while (m.find()) {
+      word = m.replaceFirst("." + m.group(1)/*.toUpperCase()*/);
+      m = p.matcher(word);
+    }
+
+    // Uppercase the class name.
+    p = Pattern.compile("(\\.?)(\\w)([^\\.]*)$");
+    m = p.matcher(word);
+    if (m.find()) {
+      String rep = m.group(1) + m.group(2).toUpperCase() + m.group(3);
+      rep = rep.replaceAll("\\$", "\\\\\\$");
+      word = m.replaceAll(rep);
+    }
+
+    // Replace two underscores with $ to support inner classes.
+    p = Pattern.compile("(__)(.)");
+    m = p.matcher(word);
+    while (m.find()) {
+      word = m.replaceFirst("\\$" + m.group(2).toUpperCase());
+      m = p.matcher(word);
+    }
+
+    // Remove all underscores
+    p = Pattern.compile("(_)(.)");
+    m = p.matcher(word);
+    while (m.find()) {
+      word = m.replaceFirst(m.group(2).toUpperCase());
+      m = p.matcher(word);
+    }
+
+    if (lowercaseFirstLetter) {
+      word = word.substring(0, 1).toLowerCase() + word.substring(1);
+    }
+
+    return word;
+  }
+
+
 }
