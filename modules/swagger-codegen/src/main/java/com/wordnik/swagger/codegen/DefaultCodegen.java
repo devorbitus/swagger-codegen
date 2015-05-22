@@ -1,25 +1,57 @@
 package com.wordnik.swagger.codegen;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.wordnik.swagger.codegen.examples.ExampleGenerator;
-import com.wordnik.swagger.models.*;
+import com.wordnik.swagger.models.ArrayModel;
+import com.wordnik.swagger.models.Model;
+import com.wordnik.swagger.models.ModelImpl;
+import com.wordnik.swagger.models.Operation;
+import com.wordnik.swagger.models.RefModel;
+import com.wordnik.swagger.models.Response;
+import com.wordnik.swagger.models.Swagger;
 import com.wordnik.swagger.models.auth.ApiKeyAuthDefinition;
 import com.wordnik.swagger.models.auth.BasicAuthDefinition;
 import com.wordnik.swagger.models.auth.In;
 import com.wordnik.swagger.models.auth.SecuritySchemeDefinition;
-import com.wordnik.swagger.models.parameters.*;
-import com.wordnik.swagger.models.properties.*;
+import com.wordnik.swagger.models.parameters.BodyParameter;
+import com.wordnik.swagger.models.parameters.CookieParameter;
+import com.wordnik.swagger.models.parameters.FormParameter;
+import com.wordnik.swagger.models.parameters.HeaderParameter;
+import com.wordnik.swagger.models.parameters.Parameter;
+import com.wordnik.swagger.models.parameters.PathParameter;
+import com.wordnik.swagger.models.parameters.QueryParameter;
+import com.wordnik.swagger.models.parameters.SerializableParameter;
+import com.wordnik.swagger.models.properties.AbstractNumericProperty;
+import com.wordnik.swagger.models.properties.ArrayProperty;
+import com.wordnik.swagger.models.properties.BooleanProperty;
+import com.wordnik.swagger.models.properties.DateProperty;
+import com.wordnik.swagger.models.properties.DateTimeProperty;
+import com.wordnik.swagger.models.properties.DecimalProperty;
+import com.wordnik.swagger.models.properties.DoubleProperty;
+import com.wordnik.swagger.models.properties.FloatProperty;
+import com.wordnik.swagger.models.properties.IntegerProperty;
+import com.wordnik.swagger.models.properties.LongProperty;
+import com.wordnik.swagger.models.properties.MapProperty;
+import com.wordnik.swagger.models.properties.Property;
+import com.wordnik.swagger.models.properties.PropertyBuilder;
+import com.wordnik.swagger.models.properties.RefProperty;
+import com.wordnik.swagger.models.properties.StringProperty;
 import com.wordnik.swagger.util.Json;
-
-import org.apache.commons.lang.StringUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.*;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DefaultCodegen {
   Logger LOGGER = LoggerFactory.getLogger(DefaultCodegen.class);
@@ -182,6 +214,9 @@ public class DefaultCodegen {
     return result;
   }
 
+  public String toEnumName(CodegenProperty property) {
+    return StringUtils.capitalize(property.name) + "Enum";
+  }
 
   public String escapeReservedWord(String name) {
     throw new RuntimeException("reserved word " + name + " not allowed");
@@ -486,6 +521,7 @@ public class DefaultCodegen {
       }
       if(impl.getProperties() != null && impl.getProperties().size() > 0) {
         m.hasVars = true;
+        m.hasEnums = false;
         for(String key: impl.getProperties().keySet()) {
           Property prop = impl.getProperties().get(key);
 
@@ -513,6 +549,8 @@ public class DefaultCodegen {
             }
             m.vars.add(cp);
             count += 1;
+            if (cp.isEnum)
+              m.hasEnums = true;
             if(count != impl.getProperties().keySet().size())
               cp.hasMore = new Boolean(true);
             if(cp.isContainer != null) {
@@ -605,7 +643,7 @@ public class DefaultCodegen {
 
     // this can cause issues for clients which don't support enums
     if(property.isEnum)
-      property.datatypeWithEnum = StringUtils.capitalize(property.name) + "Enum";
+      property.datatypeWithEnum = toEnumName(property);
     else
       property.datatypeWithEnum = property.datatype;
 
@@ -738,7 +776,6 @@ public class DefaultCodegen {
 
     if (operation.getResponses() != null && !operation.getResponses().isEmpty()) {
       Response methodResponse = findMethodResponse(operation.getResponses());
-      CodegenResponse methodCodegenResponse = null;
 
       for (Map.Entry<String, Response> entry : operation.getResponses().entrySet()) {
         Response response = entry.getValue();
@@ -748,9 +785,7 @@ public class DefaultCodegen {
             !defaultIncludes.contains(r.baseType) &&
             !languageSpecificPrimitives.contains(r.baseType))
           imports.add(r.baseType);
-
-        if (response == methodResponse)
-          methodCodegenResponse = r;
+        r.isDefault = response == methodResponse;
         op.responses.add(r);
       }
       op.responses.get(op.responses.size() - 1).hasMore = false;
@@ -920,6 +955,15 @@ public class DefaultCodegen {
       p.required = param.getRequired();
     p.jsonSchema = Json.pretty(param);
 
+    // move the defaultValue for headers, forms and params
+    if(param instanceof QueryParameter) {
+        p.defaultValue = ((QueryParameter)param).getDefaultValue();
+    } else if(param instanceof HeaderParameter) {
+    	p.defaultValue = ((HeaderParameter)param).getDefaultValue();
+    } else if(param instanceof FormParameter) {
+    	p.defaultValue = ((FormParameter)param).getDefaultValue();
+    }
+
     if(param instanceof SerializableParameter) {
       SerializableParameter qp = (SerializableParameter) param;
       Property property = null;
@@ -934,6 +978,19 @@ public class DefaultCodegen {
         collectionFormat = qp.getCollectionFormat();
         CodegenProperty pr = fromProperty("inner", inner);
         p.baseType = pr.datatype;
+        p.isContainer = true;
+        imports.add(pr.baseType);
+      }
+      else if("object".equals(qp.getType())) {
+        Property inner = qp.getItems();
+        if(inner == null) {
+          LOGGER.warn("warning!  No inner type supplied for map parameter \"" + qp.getName() + "\", using String");
+          inner = new StringProperty().description("//TODO automatically added by swagger-codegen");
+        }
+        property = new MapProperty(inner);
+        collectionFormat = qp.getCollectionFormat();
+        CodegenProperty pr = fromProperty("inner", inner);
+        p.baseType = pr.datatype;
         imports.add(pr.baseType);
       }
       else
@@ -942,6 +999,7 @@ public class DefaultCodegen {
         LOGGER.warn("warning!  Property type \"" + qp.getType() + "\" not found for parameter \"" + param.getName() + "\", using String");
         property = new StringProperty().description("//TODO automatically added by swagger-codegen.  Type was " + qp.getType() + " but not supported");
       }
+      property.setRequired(param.getRequired());
       CodegenProperty model = fromProperty(qp.getName(), property);
       p.collectionFormat = collectionFormat;
       p.dataType = model.datatype;
@@ -965,6 +1023,7 @@ public class DefaultCodegen {
         else {
           // TODO: missing format, so this will not always work
           Property prop = PropertyBuilder.build(impl.getType(), null, null);
+          prop.setRequired(bp.getRequired());
           CodegenProperty cp = fromProperty("property", prop);
           if(cp != null) {
             p.dataType = cp.datatype;
@@ -978,6 +1037,7 @@ public class DefaultCodegen {
         CodegenModel cm = fromModel(bp.getName(), impl);
         // get the single property
         ArrayProperty ap = new ArrayProperty().items(impl.getItems());
+        ap.setRequired(param.getRequired());
         CodegenProperty cp = fromProperty("inner", ap);
         if(cp.complexType != null) {
           imports.add(cp.complexType);
@@ -1012,9 +1072,9 @@ public class DefaultCodegen {
     if(schemes == null)
       return null;
 
-    List<CodegenSecurity> secs = new ArrayList<CodegenSecurity>();
-    for(Iterator entries = schemes.entrySet().iterator(); entries.hasNext(); ) {
-      Map.Entry<String, SecuritySchemeDefinition> entry = (Map.Entry<String, SecuritySchemeDefinition>) entries.next();
+    List<CodegenSecurity> secs = new ArrayList<CodegenSecurity>(schemes.size());
+    for (Iterator<Map.Entry<String, SecuritySchemeDefinition>> it = schemes.entrySet().iterator(); it.hasNext();) {
+      final Map.Entry<String, SecuritySchemeDefinition> entry = it.next();
       final SecuritySchemeDefinition schemeDefinition = entry.getValue();
 
       CodegenSecurity sec = CodegenModelFactory.newInstance(CodegenModelType.SECURITY);
@@ -1034,23 +1094,21 @@ public class DefaultCodegen {
         sec.isOAuth = !sec.isBasic;
       }
 
-      sec.hasMore = entries.hasNext();
+      sec.hasMore = it.hasNext();
       secs.add(sec);
     }
     return secs;
   }
 
-  protected List<Map<String, String>> toExamples(Map<String, String> examples) {
+  protected List<Map<String, Object>> toExamples(Map<String, Object> examples) {
     if(examples == null)
       return null;
 
-    List<Map<String, String>> output = new ArrayList<Map<String, String>>();
-    for(String key: examples.keySet()) {
-      String value = examples.get(key);
-
-      Map<String, String> kv = new HashMap<String, String>();
-      kv.put("contentType", key);
-      kv.put("example", value);
+    final List<Map<String, Object>> output = new ArrayList<Map<String, Object>>(examples.size());
+    for(Map.Entry<String, Object> entry : examples.entrySet()) {
+      final Map<String, Object> kv = new HashMap<String, Object>();
+      kv.put("contentType", entry.getKey());
+      kv.put("example", entry.getValue());
       output.add(kv);
     }
     return output;
@@ -1185,4 +1243,13 @@ public class DefaultCodegen {
   }
 
 
+  public String apiFilename(String templateName, String tag)
+  {
+    String suffix = apiTemplateFiles().get(templateName);
+    return apiFileFolder() + File.separator + toApiFilename(tag) + suffix;
+  }
+
+  public boolean shouldOverwrite( String filename ){
+    return true;
+  }
 }
