@@ -1,0 +1,15 @@
+response = new ApiResponseMessage();
+	      Integer count = DAO.useJNDI(JNDI)
+	              .setSQL({{sqlVarName}}){{^isDelete}}{{#updateableInputs}}
+	              {{>daoInputExpanded}}{{/updateableInputs}}{{/isDelete}}{{#isDelete}}{{#primaryKeys}}
+	              {{>daoInputExpanded}}{{/primaryKeys}}{{/isDelete}}
+	              .debug(logger)
+	              .qualify( DAO.SQL_MUTATION_EXCEPTION, false )
+				  .displayAs("{{>daoReturnType}}-{{nickname}}")
+				  .count();
+		  if(count <= 0){
+		      throw new NotFoundException(0, MessageFormat.format(UNABLE_TO_FIND_MESSAGE,
+						"{{tableName}}"));
+		  }
+	      response.setCodeAndType(ApiResponseMessage.OK);
+	      response.setRecordsAffected(count);

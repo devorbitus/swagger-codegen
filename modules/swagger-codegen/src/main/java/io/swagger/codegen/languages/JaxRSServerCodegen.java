@@ -25,7 +25,7 @@ public class JaxRSServerCodegen extends JavaClientCodegen implements CodegenConf
     public JaxRSServerCodegen() {
         super.processOpts();
 
-        sourceFolder = "src/gen/java";
+        sourceFolder = System.getProperty("swagger.codegen.jaxrs.sourcefolder", "src/gen/java");
 
         outputFolder = System.getProperty("swagger.codegen.jaxrs.genfolder", "generated-code/javaJaxRS");
         modelTemplateFiles.put("model.mustache", ".java");
@@ -35,8 +35,16 @@ public class JaxRSServerCodegen extends JavaClientCodegen implements CodegenConf
         apiTemplateFiles.put("apiServiceFactory.mustache", ".java");
         templateDir = "JavaJaxRS";
         apiPackage = System.getProperty("swagger.codegen.jaxrs.apipackage", "io.swagger.api");
+        domain = System.getProperty("domain", "swagger.io");
         modelPackage = System.getProperty("swagger.codegen.jaxrs.modelpackage", "io.swagger.model");
-
+        exceptionPackage = System.getProperty("swagger.codegen.jaxrs.exceptionpackage", "io.swagger.exception");
+        implPackage = System.getProperty("swagger.codegen.jaxrs.impl.source", "io.swagger.impl");
+        resourcePackage = System.getProperty("swagger.codegen.jaxrs.resources", "io.swagger.api"); 
+        dbPackage = System.getProperty("swagger.codegen.jaxrs.dbpackage", null);
+        webXmlPath = System.getProperty("swagger.codegen.jaxrs.webxmlpath", "src/main/webapp/WEB-INF");
+        factoryPackage = System.getProperty("swagger.codegen.jaxrs.factory.source", "io.swagger.factory");
+        jndi = System.getProperty("swagger.codegen.jaxrs.jndi.datasource", "ChangeThisDatasource.1");
+        
         additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, invokerPackage);
         additionalProperties.put(CodegenConstants.GROUP_ID, groupId);
         additionalProperties.put(CodegenConstants.ARTIFACT_ID, artifactId);
@@ -76,16 +84,17 @@ public class JaxRSServerCodegen extends JavaClientCodegen implements CodegenConf
         supportingFiles.add(new SupportingFile("pom.mustache", "", "pom.xml"));
         supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
         supportingFiles.add(new SupportingFile("ApiException.mustache",
-                (sourceFolder + File.separator + apiPackage).replace(".", java.io.File.separator), "ApiException.java"));
+                (sourceFolder + File.separator + exceptionPackage).replace(".", java.io.File.separator), "ApiException.java"));
         supportingFiles.add(new SupportingFile("ApiOriginFilter.mustache",
                 (sourceFolder + File.separator + apiPackage).replace(".", java.io.File.separator), "ApiOriginFilter.java"));
         supportingFiles.add(new SupportingFile("ApiResponseMessage.mustache",
                 (sourceFolder + File.separator + apiPackage).replace(".", java.io.File.separator), "ApiResponseMessage.java"));
+        supportingFiles.add(new SupportingFile("Bootstrap.mustache",
+        		(sourceFolder + File.separator + apiPackage).replace(".", java.io.File.separator), "Bootstrap.java"));
         supportingFiles.add(new SupportingFile("NotFoundException.mustache",
-                (sourceFolder + File.separator + apiPackage).replace(".", java.io.File.separator), "NotFoundException.java"));
+                (sourceFolder + File.separator + exceptionPackage).replace(".", java.io.File.separator), "NotFoundException.java"));
         supportingFiles.add(new SupportingFile("web.mustache",
-                ("src/main/webapp/WEB-INF"), "web.xml"));
-
+                (webXmlPath), "web.xml"));
     }
 
     @Override
@@ -173,32 +182,36 @@ public class JaxRSServerCodegen extends JavaClientCodegen implements CodegenConf
         String result = super.apiFilename(templateName, tag);
 
         if (templateName.endsWith("Impl.mustache")) {
-            int ix = result.lastIndexOf('/');
-            result = result.substring(0, ix) + "/impl" + result.substring(ix, result.length() - 5) + "ServiceImpl.java";
-
-            String output = System.getProperty("swagger.codegen.jaxrs.impl.source");
-            if (output != null) {
-                result = result.replace(apiFileFolder(), implFileFolder(output));
-            }
+        	result = renamePackage(result, "ServiceImpl.java", "swagger.codegen.jaxrs.impl.source", "io.swagger.impl");
         } else if (templateName.endsWith("Factory.mustache")) {
-            int ix = result.lastIndexOf('/');
-            result = result.substring(0, ix) + "/factories" + result.substring(ix, result.length() - 5) + "ServiceFactory.java";
-
-            String output = System.getProperty("swagger.codegen.jaxrs.impl.source");
-            if (output != null) {
-                result = result.replace(apiFileFolder(), implFileFolder(output));
-            }
+            result = renamePackage(result, "ServiceFactory.java", "swagger.codegen.jaxrs.factory.source", "io.swagger.factory");
         } else if (templateName.endsWith("Service.mustache")) {
             int ix = result.lastIndexOf('.');
             result = result.substring(0, ix) + "Service.java";
+        } else if (templateName.endsWith("api.mustache")){
+        	result = renamePackage(result, ".java", "swagger.codegen.jaxrs.resources", "io.swagger.api");
+        } else if(templateName.endsWith("Dao.mustache")){
+        	result = renamePackage(result, "DAO.java", "swagger.codegen.jaxrs.dbpackage", null);
         }
 
         return result;
     }
 
-    private String implFileFolder(String output) {
-        return outputFolder + "/" + output + "/" + apiPackage().replace('.', File.separatorChar);
-    }
+	private String renamePackage(String result, String fileEnding, String packageProperty, String defaultPackageProperty) {
+		int ix = result.lastIndexOf('/');
+		String begining = result.substring(0, ix);
+		String end = result.substring(ix, result.length() - 5) + fileEnding; 
+
+		String output = System.getProperty(packageProperty, defaultPackageProperty);
+		if (output != null) {
+			ix = end.lastIndexOf('\\');
+			end = end.substring(ix, end.length());
+		    result = rootSourceFolder() +  output.replace('.', File.separatorChar) + end;
+		} else {
+			result = begining + end;
+		}
+		return result;
+	}
 
     public boolean shouldOverwrite(String filename) {
         return super.shouldOverwrite(filename) && !filename.endsWith("ServiceImpl.java") && !filename.endsWith("ServiceFactory.java");

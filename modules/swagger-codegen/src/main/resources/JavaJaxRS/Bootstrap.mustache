@@ -1,0 +1,89 @@
+package {{apiPackage}};
+
+import io.swagger.jaxrs.config.BeanConfig;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import org.apache.log4j.Logger;{{#dbPackage}}
+import com.homedepot.ta.aa.util.TAAAResourceManager;{{/dbPackage}}
+
+public class Bootstrap extends HttpServlet {
+
+	private static final long serialVersionUID = 1L;
+	private static final Logger logger = Logger.getLogger(Bootstrap.class);{{#dbPackage}}
+	public static final String HOST_NAME=getHostName();
+    
+    public static final String ENV_TYPE=getEnvType();
+    public static final String AD="AD";
+    public static final String ST="ST";
+    public static final String QA="QA";
+    public static final String Q1="Q1";
+    public static final String Q2="Q2";
+    public static final String QP="QP";
+    public static final String TR="TR";
+    public static final String PR="PR";
+    public static final String LOCAL="localhost";
+    
+    public static final boolean IS_AD=AD.equals(ENV_TYPE);
+    public static final boolean IS_QA=QA.equals(ENV_TYPE);
+    public static final boolean IS_QP=QP.equals(ENV_TYPE);
+    public static final boolean IS_PR=PR.equals(ENV_TYPE);{{/dbPackage}}
+
+	@Override
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+
+		BeanConfig beanConfig = new BeanConfig();
+		beanConfig.setVersion("{{version}}");
+		beanConfig.setTitle("{{appName}}");
+		beanConfig.setSchemes(new String[] { "http" });{{#dbPackage}}
+		beanConfig.setHost(getHostBasedOnLifeCycle());{{/dbPackage}}{{^dbPackage}}
+		beanConfig.setHost("localhost:8080");{{/dbPackage}}
+		beanConfig.setBasePath("/SbaData/rs");
+		beanConfig.setResourcePackage("{{resourcePackage}}");
+		beanConfig.setScan(true);
+	}{{#dbPackage}}
+	
+	private static String getEnvType() {
+        String env = TAAAResourceManager.getProperty("host.LCP");
+        logger.info("Environment (host.LCP) =" + env);
+		if (env == null) {
+			logger.warn("Undefined environment, defaulting to "+AD);
+			env = AD;
+		}
+		return env;
+    }
+    
+    private static String getHostName(){
+	    String hostName="unknown";
+	    try {
+	        hostName= java.net.InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+        	logger.warn("Exception trying to get the host name");
+        }
+        return hostName;
+	}
+    
+    public static String getHostBasedOnLifeCycle() {
+    	String env = getEnvType();
+    	if ( env.equals(PR)) {
+    		return "webapps.homedepot.com";
+    	} else if (env.equals(QA) || env.equals(QP) || env.equals(ST) || env.equals(TR) || env.equals(Q1) || env.equals(Q2)) {
+    		return "webapps-" + env.toLowerCase() + ".homedepot.com";
+    	}else {
+    		if(IS_AD){
+    			return "localhost.homedepot.com";
+    		 
+    		}
+    		else return "webapps-qa.homedepot.com"; 
+    	}  
+    }
+    
+    public static String getProxyAddressBasedOnLifCycle(){
+    	String addy = null;
+    	addy = "http://" + getHostBasedOnLifeCycle();
+    	return addy;
+    }
+    {{/dbPackage}}
+}

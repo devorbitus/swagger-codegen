@@ -34,7 +34,6 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
     protected String groupId = "io.swagger";
     protected String artifactId = "swagger-java-client";
     protected String artifactVersion = "1.0.0";
-    protected String sourceFolder = "src/main/java";
     protected String localVariablePrefix = "";
     protected Boolean serializableModel = false;
 
@@ -204,6 +203,10 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
     @Override
     public String escapeReservedWord(String name) {
         return "_" + name;
+    }
+    
+    public String rootSourceFolder(){
+    	return outputFolder + "/" + sourceFolder + "/";
     }
 
     @Override
@@ -422,11 +425,7 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
         this.artifactVersion = artifactVersion;
     }
 
-    public void setSourceFolder(String sourceFolder) {
-        this.sourceFolder = sourceFolder;
-    }
-
-    public void setLocalVariablePrefix(String localVariablePrefix) {
+	public void setLocalVariablePrefix(String localVariablePrefix) {
         this.localVariablePrefix = localVariablePrefix;
     }
 

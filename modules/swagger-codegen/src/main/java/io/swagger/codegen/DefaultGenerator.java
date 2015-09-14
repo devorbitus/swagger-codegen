@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
+
 import io.swagger.codegen.languages.CodeGenStatus;
 import io.swagger.models.ComposedModel;
 import io.swagger.models.Contact;
@@ -18,7 +19,10 @@ import io.swagger.models.auth.OAuth2Definition;
 import io.swagger.models.auth.SecuritySchemeDefinition;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.util.Json;
+
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,6 +147,8 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                     modelMap.put(name, model);
                     Map<String, Object> models = processModels(config, modelMap, definitions);
                     models.putAll(config.additionalProperties());
+                    models.put("modelPackage", config.modelPackage());
+                    models.put("dbPackage", config.dbPackage());
 
                     allModels.add(((List<Object>) models.get("models")).get(0));
 
@@ -183,11 +189,17 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                 operation.put("contextPath", contextPath);
                 operation.put("baseName", tag);
                 operation.put("modelPackage", config.modelPackage());
+                operation.put("resourcePackage", config.resourcePackage());
                 operation.putAll(config.additionalProperties());
                 operation.put("classname", config.toApiName(tag));
                 operation.put("classVarName", config.toApiVarName(tag));
                 operation.put("importPath", config.toApiImport(tag));
-
+                operation.put("implPackage", config.implPackage());
+                operation.put("domain", config.domain());
+                operation.put("factoryPackage", config.factoryPackage());
+                operation.put("exceptionPackage", config.exceptionPackage());
+                operation.put("jndi", config.jndi());
+                
                 processMimeTypes(swagger.getConsumes(), operation, "consumes");
                 processMimeTypes(swagger.getProduces(), operation, "produces");
 
@@ -197,6 +209,122 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                     if (i < (allOperations.size() - 1)) {
                         oo.put("hasMore", "true");
                     }
+                }
+                
+                if(!StringUtils.isEmpty(config.dbPackage())){
+                	CodegenModel cm = null;
+                	Map<String, Object> modelMap = null;
+                	for(CodegenOperation co : ((Map<String, List<CodegenOperation>>) operation.get("operations")).get("operation")){
+                    	boolean isGeneratedId = false;
+                		for(Object obj : allModels){
+                    		modelMap = (Map<String, Object>) obj;
+                    		cm = (CodegenModel) modelMap.get("model");
+                    		if(!StringUtils.isEmpty(cm.tableName) && co.returnType.equalsIgnoreCase(cm.name)){
+                    			operation.put("tableName", cm.tableName);
+                    			List<CodegenColumn> columns = new ArrayList<CodegenColumn>();
+                    			List<CodegenColumn> primaryKeys = new ArrayList<CodegenColumn>();
+                    			List<CodegenColumn> updateable = new ArrayList<CodegenColumn>();
+                    			List<CodegenColumn> updateableInputs = new ArrayList<CodegenColumn>();
+                    			List<CodegenColumn> creatable = new ArrayList<CodegenColumn>();
+                    			List<CodegenColumn> nonGenerated = new ArrayList<CodegenColumn>();
+                    			for(CodegenProperty cp : cm.vars){
+                    				if(!StringUtils.isEmpty(cp.columnName)){
+                    					CodegenColumn col = createColumn(
+												columns, cp);
+                    					
+                    					if(!(cp.isGeneratedId != null && cp.isGeneratedId)){
+                    						nonGenerated.add(col);
+                    					}
+                    					if(cp.primaryKey != null && cp.primaryKey){
+                    						col = createColumn(
+                    								primaryKeys, cp);
+                    						col.inputName = cp.name;
+                    					}
+                    					if(cp.updateable != null && cp.updateable){
+                    						col = createColumn(
+                    								updateable, cp);
+                    					}
+                    					if(cp.creatable != null && cp.creatable){
+                    						col = createColumn(
+                    								creatable, cp);
+                    					}
+                    					if(cp.isGeneratedId != null && cp.isGeneratedId){
+                        					isGeneratedId = true;
+                        				}
+                    				}
+                    			}
+                    			if(!columns.isEmpty()){
+                    				figureOutHasMore(columns);
+                    				operation.put("columns", columns);
+                    			}
+                    			if(!primaryKeys.isEmpty()){
+                    				figureOutHasMore(primaryKeys);
+                    				figureOutInputIndex(primaryKeys);
+                    				operation.put("primaryKeys", primaryKeys);
+                    			}
+                    			if(!updateable.isEmpty()){
+                    				updateableInputs.addAll(cloneColumnList(updateable));
+                    				figureOutHasMore(updateable);
+                    				figureOutInputIndex(updateable);
+                    				operation.put("updateable", updateable);
+                    			}
+                    			if(!updateableInputs.isEmpty()){
+                    				updateableInputs.addAll(cloneColumnList(primaryKeys));
+                    				figureOutHasMore(updateableInputs);
+                    				figureOutInputIndex(updateableInputs);
+                    				operation.put("updateableInputs", updateableInputs);
+                    			}
+                    			if(!creatable.isEmpty()){
+                    				figureOutHasMore(creatable);
+                    				figureOutInputIndex(creatable);
+                    				operation.put("creatable", creatable);
+                    			}
+                    			if(!nonGenerated.isEmpty()){
+                    				figureOutInputIndex(nonGenerated);
+                    				operation.put("nonGenerated", nonGenerated);
+                    			}
+                    			break;
+                    		}
+                    	}
+                    	if(operation.containsKey("tableModel")){
+                    		break;
+                    	}
+                    	if(co.httpMethod != null){
+                    		if("POST".equalsIgnoreCase(co.httpMethod) && co.queryParams.isEmpty() && co.pathParams.isEmpty()){
+                        		co.isCreate = Boolean.TRUE;
+                        		co.sqlVarName = "CREATE";
+                        		if(isGeneratedId){
+                        			co.isGeneratedId = Boolean.TRUE;
+                        		}
+                        	} else if("POST".equalsIgnoreCase(co.httpMethod)){
+                        		co.isUpdate = Boolean.TRUE;
+                        		co.sqlVarName = "UPDATE";
+                        		co.isMutateWithCount = Boolean.TRUE;
+                        	} else if("GET".equalsIgnoreCase(co.httpMethod)){
+                        		co.isGet = Boolean.TRUE;
+                        		co.sqlVarName = "GET_BY_ID";
+                        	} else if("DELETE".equalsIgnoreCase(co.httpMethod)){
+                        		co.isDelete = Boolean.TRUE;
+                        		co.sqlVarName = "DELETE";
+                        		co.isMutateWithCount = Boolean.TRUE;
+                        	} else if("PUT".equalsIgnoreCase(co.httpMethod)){
+                        		co.isPut = Boolean.TRUE;
+                        		co.sqlVarName = "UPDATE";
+                        		co.isMutateWithCount = Boolean.TRUE;
+                        	} else if("UPDATE".equalsIgnoreCase(co.httpMethod)){
+                        		co.isUpdate = Boolean.TRUE;
+                        		co.sqlVarName = "UPDATE";
+                        		co.isMutateWithCount = Boolean.TRUE;
+                        	}
+                    	}
+                    	if(co.returnType != null && "Void".equalsIgnoreCase(co.returnType)){
+                    		co.returnsVoid = true;
+                    	}
+                    }
+                	config.supportingFiles().add(new SupportingFile("DaoBase.mustache", 
+                    		(config.sourceFolder() + File.separator + config.dbPackage()).replace(".", java.io.File.separator), "DAOBase.java"));
+                	config.apiTemplateFiles().put("serviceDao.mustache", ".java");
+                	operation.put("dbPackage", config.dbPackage());
                 }
 
                 for (String templateName : config.apiTemplateFiles().keySet()) {
@@ -244,6 +372,12 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
             bundle.put("models", allModels);
             bundle.put("apiFolder", config.apiPackage().replace('.', File.separatorChar));
             bundle.put("modelPackage", config.modelPackage());
+            bundle.put("exceptionPackage", config.exceptionPackage());
+            bundle.put("resourcePackage", config.resourcePackage());
+            bundle.put("domain", config.domain());
+            bundle.put("factoryPackage", config.factoryPackage());
+            bundle.put("jndi", config.jndi());
+            bundle.put("dbPackage", config.dbPackage());
             List<CodegenSecurity> authMethods = config.fromSecurity(swagger.getSecurityDefinitions());
             if (authMethods != null && !authMethods.isEmpty()) {
                 bundle.put("authMethods", authMethods);
@@ -332,6 +466,48 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         }
         return files;
     }
+
+	private List<CodegenColumn> cloneColumnList(List<CodegenColumn> originalList) {
+		List<CodegenColumn> copy = new ArrayList<CodegenColumn>();
+		CodegenColumn ccc = null;
+		for(CodegenColumn cc : originalList){
+			ccc = cc.clone();
+			copy.add(ccc);
+		}
+		return copy;
+	}
+
+	private CodegenColumn createColumn(List<CodegenColumn> columns,
+			CodegenProperty cp) {
+		CodegenColumn col = new CodegenColumn();
+		col.columnName = cp.columnName;
+		col.getter = cp.getter;
+		col.setter = cp.setter;
+		col.addId = propIsTrue(cp.autoId);
+		col.addTimestamp = propIsTrue(cp.autoTs);
+		columns.add(col);
+		return col;
+	}
+	
+	private Boolean propIsTrue(Boolean prop){
+		return prop != null && prop;
+	}
+
+	private void figureOutHasMore(List<CodegenColumn> columns) {
+		for (int i = 0; i < columns.size(); i++) {
+			if(i < (columns.size() - 1)){
+				CodegenColumn col = columns.get(i);
+				col.hasMore = Boolean.TRUE;
+			}
+		}
+	}
+	
+	private void figureOutInputIndex(List<CodegenColumn> columns) {
+		for (int i = 0; i < columns.size(); i++) {
+			CodegenColumn col = columns.get(i);
+			col.inputIndex = i + 1;
+		}
+	}
 
     private void processMimeTypes(List<String> mimeTypeList, Map<String, Object> operation, String source) {
         if (mimeTypeList != null && mimeTypeList.size() > 0) {

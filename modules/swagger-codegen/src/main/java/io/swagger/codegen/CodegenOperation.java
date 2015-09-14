@@ -12,9 +12,10 @@ public class CodegenOperation {
     public final List<CodegenProperty> responseHeaders = new ArrayList<CodegenProperty>();
     public Boolean hasConsumes, hasProduces, hasParams, returnTypeIsPrimitive,
             returnSimpleType, subresourceOperation, isMapContainer, isListContainer,
-            hasMore = Boolean.TRUE, isMultipart, isResponseBinary = Boolean.FALSE;
+            hasMore = Boolean.TRUE, isMultipart, isResponseBinary = Boolean.FALSE,
+            isGet, isPost, isDelete, isPut, isUpdate, isCreate, returnsVoid,isGeneratedId,isMutateWithCount;
     public String path, operationId, returnType, httpMethod, returnBaseType,
-            returnContainer, summary, notes, baseName, defaultResponse;
+            returnContainer, summary, notes, baseName, defaultResponse, sqlVarName;
     public List<Map<String, String>> consumes, produces;
     public CodegenParameter bodyParam;
     public List<CodegenParameter> allParams = new ArrayList<CodegenParameter>();

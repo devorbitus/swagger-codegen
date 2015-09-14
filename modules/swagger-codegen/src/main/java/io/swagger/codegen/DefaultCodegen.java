@@ -2,6 +2,7 @@ package io.swagger.codegen;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+
 import io.swagger.codegen.examples.ExampleGenerator;
 import io.swagger.models.ArrayModel;
 import io.swagger.models.ComposedModel;
@@ -42,11 +43,13 @@ import io.swagger.models.properties.PropertyBuilder.PropertyId;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.StringProperty;
 import io.swagger.util.Json;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,13 +71,16 @@ public class DefaultCodegen {
     protected static final Logger LOGGER = LoggerFactory.getLogger(DefaultCodegen.class);
 
     protected String outputFolder = "";
+    protected String sourceFolder = "src/main/java";
     protected Set<String> defaultIncludes = new HashSet<String>();
     protected Map<String, String> typeMapping = new HashMap<String, String>();
     protected Map<String, String> instantiationTypes = new HashMap<String, String>();
     protected Set<String> reservedWords = new HashSet<String>();
     protected Set<String> languageSpecificPrimitives = new HashSet<String>();
     protected Map<String, String> importMapping = new HashMap<String, String>();
-    protected String modelPackage = "", apiPackage = "", fileSuffix;
+    protected String modelPackage = "", apiPackage = "", fileSuffix, 
+    		exceptionPackage = "", webXmlPath = "", dbPackage = "", implPackage = "",
+    		resourcePackage = "", domain = "", factoryPackage = "", jndi = "";
     protected Map<String, String> apiTemplateFiles = new HashMap<String, String>();
     protected Map<String, String> modelTemplateFiles = new HashMap<String, String>();
     protected String templateDir;
@@ -162,9 +168,41 @@ public class DefaultCodegen {
     public String modelPackage() {
         return modelPackage;
     }
+    
+    public String exceptionPackage(){
+    	return exceptionPackage;
+    }
+    
+    public String domain(){
+    	return domain;
+    }
+    
+    public String implPackage(){
+    	return implPackage;
+    }
+    
+    public String jndi(){
+    	return jndi;
+    }
+    
+    public String factoryPackage(){
+    	return factoryPackage;
+    }
+    
+    public String resourcePackage(){
+    	return resourcePackage;
+    }
+    
+    public String dbPackage(){
+    	return dbPackage;
+    }
 
     public String apiPackage() {
         return apiPackage;
+    }
+    
+    public String sourceFolder(){
+    	return sourceFolder;
     }
 
     public String fileSuffix() {
@@ -609,6 +647,7 @@ public class DefaultCodegen {
             }
             addVars(m, impl.getProperties(), impl.getRequired());
         }
+        m.tableName = (String) model.getVendorExtensions().get("x-tableName");
         return m;
     }
 
@@ -1428,6 +1467,14 @@ public class DefaultCodegen {
                     }
                     addImport(m, cp.baseType);
                     addImport(m, cp.complexType);
+                    cp.columnName = (String) prop.getVendorExtensions().get("x-columnName");
+                    cp.primaryKey = prop.getVendorExtensions().containsKey("x-primaryKey") ? Boolean.TRUE : null;
+                    cp.creatable = prop.getVendorExtensions().containsKey("x-creatable") ? Boolean.TRUE : null;
+                    cp.updateable = prop.getVendorExtensions().containsKey("x-updateable") ? Boolean.TRUE : null;
+                    cp.autoId = prop.getVendorExtensions().containsKey("x-autoId") ? Boolean.TRUE : null;
+                    cp.autoTs = prop.getVendorExtensions().containsKey("x-autoTs") ? Boolean.TRUE : null;
+                    cp.isGeneratedId = prop.getVendorExtensions().containsKey("x-generatedId") ? Boolean.TRUE : null;
+                    //m.tableName = (String)
                     m.vars.add(cp);
                 }
             }
@@ -1602,4 +1649,44 @@ public class DefaultCodegen {
         return name.replaceAll("[^a-zA-Z0-9_]", "");
 
     }
+
+	public String getExceptionPackage() {
+		return exceptionPackage;
+	}
+
+	public void setExceptionPackage(String exceptionPackage) {
+		this.exceptionPackage = exceptionPackage;
+	}
+
+	public String getWebXmlPath() {
+		return webXmlPath;
+	}
+
+	public void setWebXmlPath(String webXmlPath) {
+		this.webXmlPath = webXmlPath;
+	}
+
+	public String getDbPackage() {
+		return dbPackage;
+	}
+
+	public void setDbPackage(String dbPackage) {
+		this.dbPackage = dbPackage;
+	}
+
+	public String getSourceFolder() {
+		return sourceFolder;
+	}
+
+	public void setSourceFolder(String sourceFolder) {
+		this.sourceFolder = sourceFolder;
+	}
+
+	public String getResourcePackage() {
+		return resourcePackage;
+	}
+
+	public void setResourcePackage(String resourcePackage) {
+		this.resourcePackage = resourcePackage;
+	}
 }

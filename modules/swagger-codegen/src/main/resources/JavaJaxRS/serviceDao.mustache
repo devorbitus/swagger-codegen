@@ -1,0 +1,57 @@
+package {{dbPackage}};
+
+import {{package}}.*;
+import {{modelPackage}}.*;
+import com.homedepot.ta.aa.dao.exceptions.QueryException;
+import com.homedepot.ta.aa.dao.builder.DAO;
+import org.apache.log4j.Logger;
+import java.text.MessageFormat;
+import java.sql.Timestamp;
+
+{{#imports}}import {{import}};
+{{/imports}}
+
+import java.util.List;
+import {{exceptionPackage}}.NotFoundException;
+
+import java.io.InputStream;
+
+{{>generatedAnnotation}}
+{{#operations}}
+public class {{classname}}DAO extends DAOBase {
+      private static final String UNABLE_TO_FIND_MESSAGE = "Unable to find the {0} record.";
+      private static final Logger logger = Logger
+			.getLogger({{classname}}DAO.class);
+	  private static final String JNDI = "java:comp/env/jdbc/{{jndi}}";
+	  private static final String GET_BY_ID = "SELECT " +{{#columns}}
+			"       {{columnName}}    {{#hasMore}},{{/hasMore}} " +{{/columns}}
+			"FROM   {{tableName}} " +
+			"WHERE  1 = 1 " + {{#primaryKeys}}
+			" AND {{columnName}} = ? " + {{/primaryKeys}}
+			" WITH UR";
+	  private static final String UPDATE = "UPDATE {{tableName}} SET " +{{#updateable}}
+	        "       {{columnName}} = ?    {{#hasMore}},{{/hasMore}} " +{{/updateable}}
+	        "WHERE  1 = 1 " + {{#primaryKeys}}
+	        " AND {{columnName}} = ? " + {{/primaryKeys}}
+	        "";
+      private static final String CREATE = "INSERT INTO {{tableName}} ( " +{{#creatable}}
+            "       {{columnName}}    {{#hasMore}},{{/hasMore}} " +{{/creatable}}
+            " ) VALUES ( " +{{#creatable}}
+            "       ?    {{#hasMore}},{{/hasMore}} " +{{/creatable}}
+            ")";
+      private static final String DELETE = "DELETE FROM {{tableName}} " + 
+            "WHERE  1 = 1 " + {{#primaryKeys}}
+			" AND {{columnName}} = ? " + {{/primaryKeys}}
+			"";
+  
+  {{#operation}}
+      public static {{>daoReturnType}} {{nickname}}({{#allParams}}{{>serviceQueryParams}}{{>servicePathParams}}{{>serviceHeaderParams}}{{>serviceBodyParams}}{{>serviceFormParams}}{{#hasMore}},{{/hasMore}}{{/allParams}})
+              throws NotFoundException, QueryException {
+          {{>daoReturnType}} response = null;
+          {{#isMutateWithCount}}{{>daoRecordsAffected}}{{/isMutateWithCount}}{{! this is ignored
+        }}{{>daoReturnObject}}
+          return response;
+      }
+  {{/operation}}
+}
+{{/operations}}

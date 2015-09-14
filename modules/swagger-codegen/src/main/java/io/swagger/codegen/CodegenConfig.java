@@ -20,6 +20,22 @@ public interface CodegenConfig {
     Map<String, Object> additionalProperties();
 
     String apiPackage();
+    
+    String dbPackage();
+    
+    String exceptionPackage();
+    
+    String domain();
+    
+    String jndi();
+    
+    String factoryPackage();
+    
+    String resourcePackage();
+    
+    String implPackage();
+    
+    String sourceFolder();
 
     String apiFileFolder();
 

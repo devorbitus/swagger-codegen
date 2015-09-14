@@ -2,7 +2,8 @@ package {{package}};
 
 {{#imports}}import {{import}};
 {{/imports}}
-
+{{#dbPackage}}
+import com.homedepot.ta.aa.dao.builder.DAOElement;{{/dbPackage}}
 import io.swagger.annotations.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 {{#models}}
@@ -19,6 +20,8 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {
     {{#allowableValues}}{{#values}} {{.}}, {{/values}}{{/allowableValues}}
   };
   private {{{datatypeWithEnum}}} {{name}} = {{{defaultValue}}};{{/isEnum}}{{^isEnum}}
+  {{#dbPackage}}{{#columnName}}
+  @DAOElement({"{{columnName}}"}){{/columnName}}{{/dbPackage}}
   private {{{datatype}}} {{name}} = {{{defaultValue}}};{{/isEnum}}{{/vars}}
 
   {{#vars}}

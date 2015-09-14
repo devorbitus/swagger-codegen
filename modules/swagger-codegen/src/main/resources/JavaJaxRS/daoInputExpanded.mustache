@@ -1,0 +1,1 @@
+.input( {{inputIndex}} , {{#addId}}getLastUpdateUserID(){{/addId}}{{#addTimestamp}}new Timestamp(System.currentTimeMillis()){{/addTimestamp}}{{#isDelete}}{{inputName}}{{/isDelete}}{{^addId}}{{^addTimestamp}}{{^isDelete}}body.{{getter}}(){{/isDelete}}{{/addTimestamp}}{{/addId}} )

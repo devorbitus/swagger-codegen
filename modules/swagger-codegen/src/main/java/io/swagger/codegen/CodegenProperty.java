@@ -25,11 +25,13 @@ public class CodegenProperty {
     public String example;
 
     public String jsonSchema;
+    public String columnName;
     public Double minimum;
     public Double maximum;
     public Boolean exclusiveMinimum;
     public Boolean exclusiveMaximum;
-    public Boolean hasMore = null, required = null, secondaryParam = null;
+    public Boolean hasMore = null, required = null, secondaryParam = null, primaryKey = null, 
+    		updateable = null, creatable = null, autoTs = null, autoId = null, isGeneratedId = null;
     public Boolean isPrimitiveType, isContainer, isNotContainer;
     public boolean isEnum;
     public List<String> _enum;

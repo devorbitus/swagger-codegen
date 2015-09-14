@@ -1,0 +1,57 @@
+package {{apiPackage}}.db;
+
+import java.security.Principal;
+
+import com.homedepot.ta.aa.dao.QueryManager;
+import com.homedepot.ta.aa.dao.SecurityDetails;
+import com.homedepot.ta.aa.dao.exceptions.QueryException;
+
+public abstract class DAOBase {
+	
+	/**
+	 * Returns the string value to use in the last_upd_sysusr_id field. The value is modified from the authentication source and is returned in all CAPS
+	 * @return the string value to use in the last_upd_sysusr_id field. The value is modified from the authentication source and is returned in all CAPS
+	 * @throws QueryException thrown if something goes wrong accessing the data at its source
+	 */
+	public static String getLastUpdateUserID() throws QueryException
+	{
+		String id = getLastUpdateUserIDUnmodified();
+		return id.toUpperCase();
+	}
+	
+	/**
+	 * Returns the string value to use in the last_upd_sysusr_id field. The value is unmodified from the authentication source.
+	 * @return the string value to use in the last_upd_sysusr_id field. The value is unmodified from the authentication source.
+	 * @throws QueryException thrown if something goes wrong accessing the data at its source
+	 */
+	public static String getLastUpdateUserIDUnmodified() throws QueryException
+	{
+		try
+		{
+		    SecurityDetails details = QueryManager.getUserSecurityDetails();
+			
+			if ( details != null )
+			{
+				Principal p = details.getPrincipal();
+				if ( p != null )
+				{
+					String name = p.getName();
+					if ( name != null )
+					{
+						name = name.trim();
+						if ( !"".equals(name) ) 
+						{
+							return name; 
+						}
+					}
+				}
+			}
+		}
+		catch( RuntimeException npe )
+		{
+			// do nothing, return below
+		}
+		
+	    return "Unknown";
+	}
+}

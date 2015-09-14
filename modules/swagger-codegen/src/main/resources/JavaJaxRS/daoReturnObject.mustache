@@ -1,0 +1,43 @@
+{{#isGet}}response = DAO.useJNDI(JNDI)
+              .setSQL({{sqlVarName}}){{#primaryKeys}}
+              .input( {{inputIndex}}, {{inputName}}){{/primaryKeys}}
+              .debug(logger)
+			  .displayAs("{{>daoReturnType}}-{{nickname}}")
+			  .get( {{returnType}}.class );
+		  if(response == null){
+		      throw new NotFoundException(0, MessageFormat.format(UNABLE_TO_FIND_MESSAGE,
+						"{{tableName}}"));
+		  }{{/isGet}}{{! this is ignored
+}}{{#isGeneratedId}}Integer generated = DAO.useJNDI(JNDI)
+              .setSQL({{sqlVarName}}){{#nonGenerated}}
+              {{>daoInputExpanded}}{{/nonGenerated}}
+              .qualify("returnGeneratedKey", true)
+              .debug(logger)
+			  .displayAs("{{>daoReturnType}}-Create-{{nickname}}")
+			  .target(Integer.class);
+			  
+	   	  response = DAO.useJNDI(JNDI)
+              .setSQL(GET_BY_ID)
+              .input( 1 , generated)
+              .debug(logger)
+			  .displayAs("{{>daoReturnType}}-Read-{{nickname}}")
+			  .get( {{returnType}}.class );{{/isGeneratedId}}{{! this is ignored
+}}{{#isCreate}}{{^isGeneratedId}}Integer count = DAO.useJNDI(JNDI)
+              .setSQL({{sqlVarName}}){{#creatable}}
+              {{>daoInputExpanded}}{{/creatable}}
+              .debug(logger)
+              .qualify( DAO.SQL_MUTATION_EXCEPTION, false )
+			  .displayAs("{{returnType}}-Create-{{nickname}}")
+			  .count();
+			  
+			if(count <= 0){
+				throw new NotFoundException(0, MessageFormat.format(UNABLE_TO_FIND_MESSAGE,
+						"{{tableName}}"));
+			}
+			  
+			response = DAO.useJNDI(JNDI)
+	              .setSQL(GET_BY_ID)
+	              .inputBean( body )
+	              .debug(logger)
+				  .displayAs("{{>daoReturnType}}-Read-{{nickname}}")
+				  .get( {{returnType}}.class );{{/isGeneratedId}}{{/isCreate}}
