@@ -126,6 +126,10 @@ public class DefaultCodegen {
         return objs;
     }
 
+    //override with any special handling of the entire swagger spec
+    public void preprocessSwagger(Swagger swagger) {
+    }
+
     // override with any special handling of the entire swagger spec
     public void processSwagger(Swagger swagger) {
     }
@@ -573,6 +577,7 @@ public class DefaultCodegen {
             m.name = name;
         }
         m.description = escapeText(model.getDescription());
+        m.unescapedDescription = model.getDescription();
         m.classname = toModelName(name);
         m.classVarName = toVarName(name);
         m.modelJson = Json.pretty(model);
@@ -670,6 +675,7 @@ public class DefaultCodegen {
         property.name = toVarName(name);
         property.baseName = name;
         property.description = escapeText(p.getDescription());
+        property.unescapedDescription = p.getDescription();
         property.getter = "get" + getterAndSetterCapitalize(name);
         property.setter = "set" + getterAndSetterCapitalize(name);
         property.example = p.getExample();
@@ -1106,7 +1112,7 @@ public class DefaultCodegen {
         } else {
             r.code = responseCode;
         }
-        r.message = response.getDescription();
+        r.message = escapeText(response.getDescription());
         r.schema = response.getSchema();
         r.examples = toExamples(response.getExamples());
         r.jsonSchema = Json.pretty(response);

@@ -75,6 +75,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         List<File> files = new ArrayList<File>();
         try {
             config.processOpts();
+            config.preprocessSwagger(swagger);
 
             config.additionalProperties().put("generatedDate", DateTime.now().toString());
             config.additionalProperties().put("generatorClass", config.getClass().toString());
@@ -142,6 +143,12 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
             	List<String> sortedModelKeys = sortModelsByInheritance(definitions);
 
                 for (String name : sortedModelKeys) {
+
+                    //dont generate models that have an import mapping
+                    if(config.importMapping().containsKey(name)) {
+                        continue;
+                    }
+
                     Model model = definitions.get(name);
                     Map<String, Model> modelMap = new HashMap<String, Model>();
                     modelMap.put(name, model);
@@ -582,6 +589,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         for (String resourcePath : paths.keySet()) {
             Path path = paths.get(resourcePath);
             processOperation(resourcePath, "get", path.getGet(), ops, path);
+            processOperation(resourcePath, "head", path.getHead(), ops, path);
             processOperation(resourcePath, "put", path.getPut(), ops, path);
             processOperation(resourcePath, "post", path.getPost(), ops, path);
             processOperation(resourcePath, "delete", path.getDelete(), ops, path);

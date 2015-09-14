@@ -323,10 +323,9 @@ public class CodegenConfigurator {
     }
 
     @JsonAnySetter
-    public void addDynamicProperty(String name, Object value) {
-        if (value instanceof String) {
-            dynamicProperties.put(name, (String) value);
-        }
+    public CodegenConfigurator addDynamicProperty(String name, Object value) {
+        dynamicProperties.put(name, value.toString());
+        return this;
     }
 
     @JsonAnyGetter
@@ -386,7 +385,7 @@ public class CodegenConfigurator {
 
     public static CodegenConfigurator fromFile(String configFile) {
 
-        if(isNotEmpty(configFile)) {
+        if (isNotEmpty(configFile)) {
             try {
                 CodegenConfigurator result = Json.mapper().readValue(new File(configFile), CodegenConfigurator.class);
                 return result;

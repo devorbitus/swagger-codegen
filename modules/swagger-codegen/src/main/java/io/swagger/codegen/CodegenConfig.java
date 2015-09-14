@@ -101,6 +101,8 @@ public interface CodegenConfig {
 
     Set<String> languageSpecificPrimitives();
 
+    void preprocessSwagger(Swagger swagger);
+
     void processSwagger(Swagger swagger);
 
     String toApiFilename(String name);
