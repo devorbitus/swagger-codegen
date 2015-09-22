@@ -45,9 +45,9 @@ public class {{classname}}DAO extends DAOBase {
 			"";
   
   {{#operation}}
-      public static {{>daoReturnType}} {{nickname}}({{#allParams}}{{>serviceQueryParams}}{{>servicePathParams}}{{>serviceHeaderParams}}{{>serviceBodyParams}}{{>serviceFormParams}}{{#hasMore}},{{/hasMore}}{{/allParams}})
+      public static {{>daoReturnTypeWithContainer}} {{nickname}}({{#allParams}}{{>serviceQueryParams}}{{>servicePathParams}}{{>serviceHeaderParams}}{{>serviceBodyParams}}{{>serviceFormParams}}{{#hasMore}},{{/hasMore}}{{/allParams}})
               throws NotFoundException, QueryException {
-          {{>daoReturnType}} response = null;
+          {{>daoReturnTypeWithContainer}} response = null;
           {{#isMutateWithCount}}{{>daoRecordsAffected}}{{/isMutateWithCount}}{{! this is ignored
         }}{{>daoReturnObject}}
           return response;

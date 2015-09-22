@@ -55,6 +55,7 @@ public class JaxRSServerCodegen extends JavaClientCodegen implements CodegenConf
         languageSpecificPrimitives = new HashSet<String>(
                 Arrays.asList(
                         "String",
+                        "Short",
                         "boolean",
                         "Boolean",
                         "Double",

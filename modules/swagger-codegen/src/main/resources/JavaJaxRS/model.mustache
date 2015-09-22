@@ -18,7 +18,8 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {
   {{#vars}}{{#isEnum}}
   public enum {{datatypeWithEnum}} {
     {{#allowableValues}}{{#values}} {{.}}, {{/values}}{{/allowableValues}}
-  };
+  };{{#dbPackage}}{{#columnName}}
+  @DAOElement({"{{columnName}}"}){{/columnName}}{{/dbPackage}}
   private {{{datatypeWithEnum}}} {{name}} = {{{defaultValue}}};{{/isEnum}}{{^isEnum}}
   {{#dbPackage}}{{#columnName}}
   @DAOElement({"{{columnName}}"}){{/columnName}}{{/dbPackage}}

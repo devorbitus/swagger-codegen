@@ -328,8 +328,12 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                     		co.returnsVoid = true;
                     	}
                     }
-                	config.supportingFiles().add(new SupportingFile("DaoBase.mustache", 
-                    		(config.sourceFolder() + File.separator + config.dbPackage()).replace(".", java.io.File.separator), "DAOBase.java"));
+                	String daoBaseFileLocation = (config.sourceFolder() + File.separator + config.dbPackage()).replace(".", java.io.File.separator);
+                	SupportingFile daoBaseSupportingFile = new SupportingFile("DaoBase.mustache", 
+                			daoBaseFileLocation, "DAOBase.java");
+                	if(!config.supportingFiles().contains(daoBaseSupportingFile)){
+                		config.supportingFiles().add(daoBaseSupportingFile);
+                	}
                 	config.apiTemplateFiles().put("serviceDao.mustache", ".java");
                 	operation.put("dbPackage", config.dbPackage());
                 }
